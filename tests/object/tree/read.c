@@ -75,7 +75,7 @@ void test_object_tree_read__two(void)
 }
 
 #define BIGFILE "bigfile"
-#define BIGFILE_SIZE (off_t)4 * 1024 * 1024 * 1024 /* 4 GiB */
+#define BIGFILE_SIZE (off_t)4294967296
 
 void test_object_tree_read__largefile(void)
 {
