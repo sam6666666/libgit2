@@ -219,8 +219,9 @@ static int git_xdiff(git_patch_generated_output *output, git_patch_generated *pa
 	 * updates are needed to xo->params.flags
 	 */
 
-	git_patch_generated_old_data(&info.xd_old_data.ptr, &info.xd_old_data.size, patch);
-	git_patch_generated_new_data(&info.xd_new_data.ptr, &info.xd_new_data.size, patch);
+	if (git_patch_generated_old_data(&info.xd_old_data.ptr, &info.xd_old_data.size, patch) < 0 ||
+		git_patch_generated_new_data(&info.xd_new_data.ptr, &info.xd_new_data.size, patch) < 0)
+		return -1;
 
 	if (info.xd_old_data.size > GIT_XDIFF_MAX_SIZE ||
 		info.xd_new_data.size > GIT_XDIFF_MAX_SIZE) {
@@ -259,5 +260,5 @@ void git_xdiff_init(git_xdiff_output *xo, const git_diff_options *opts)
 	if (flags & GIT_DIFF_MINIMAL)
 		xo->params.flags |= XDF_NEED_MINIMAL;
 
-	xo->callback.outf = git_xdiff_cb;
+	xo->callback.out_line = git_xdiff_cb;
 }

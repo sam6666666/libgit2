@@ -49,10 +49,10 @@ int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 	mb[1].size = size;
 	if (size > 0 && rec[size - 1] != '\n') {
 		mb[2].ptr = (char *) "\n\\ No newline at end of file\n";
-		mb[2].size = strlen(mb[2].ptr);
+		mb[2].size = (long)strlen(mb[2].ptr);
 		i++;
 	}
-	if (ecb->outf(ecb->priv, mb, i) < 0) {
+	if (ecb->out_line(ecb->priv, mb, i) < 0) {
 
 		return -1;
 	}
@@ -339,11 +339,12 @@ int xdl_num_out(char *out, long val) {
 		*str++ = '0';
 	*str = '\0';
 
-	return str - out;
+	return (int)(str - out);
 }
 
-int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
-		      const char *func, long funclen, xdemitcb_t *ecb) {
+static int xdl_format_hunk_hdr(long s1, long c1, long s2, long c2,
+			       const char *func, long funclen,
+			       xdemitcb_t *ecb) {
 	int nb = 0;
 	mmbuffer_t mb;
 	char buf[128];
@@ -376,7 +377,7 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 	nb += 3;
 	if (func && funclen) {
 		buf[nb++] = ' ';
-		if (funclen > (long)(sizeof(buf) - nb - 1))
+		if (funclen > (long)sizeof(buf) - nb - 1)
 			funclen = sizeof(buf) - nb - 1;
 		memcpy(buf + nb, func, funclen);
 		nb += funclen;
@@ -385,9 +386,21 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 
 	mb.ptr = buf;
 	mb.size = nb;
-	if (ecb->outf(ecb->priv, &mb, 1) < 0)
+	if (ecb->out_line(ecb->priv, &mb, 1) < 0)
 		return -1;
+	return 0;
+}
 
+int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
+		      const char *func, long funclen,
+		      xdemitcb_t *ecb) {
+	if (!ecb->out_hunk)
+		return xdl_format_hunk_hdr(s1, c1, s2, c2, func, funclen, ecb);
+	if (ecb->out_hunk(ecb->priv,
+			  c1 ? s1 : s1 - 1, c1,
+			  c2 ? s2 : s2 - 1, c2,
+			  func, funclen) < 0)
+		return -1;
 	return 0;
 }
 
@@ -406,11 +419,11 @@ int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
 	xdfenv_t env;
 
 	subfile1.ptr = (char *)diff_env->xdf1.recs[line1 - 1]->ptr;
-	subfile1.size = diff_env->xdf1.recs[line1 + count1 - 2]->ptr +
-		diff_env->xdf1.recs[line1 + count1 - 2]->size - subfile1.ptr;
+	subfile1.size = (long)(diff_env->xdf1.recs[line1 + count1 - 2]->ptr +
+		diff_env->xdf1.recs[line1 + count1 - 2]->size - subfile1.ptr);
 	subfile2.ptr = (char *)diff_env->xdf2.recs[line2 - 1]->ptr;
-	subfile2.size = diff_env->xdf2.recs[line2 + count2 - 2]->ptr +
-		diff_env->xdf2.recs[line2 + count2 - 2]->size - subfile2.ptr;
+	subfile2.size = (long)(diff_env->xdf2.recs[line2 + count2 - 2]->ptr +
+		diff_env->xdf2.recs[line2 + count2 - 2]->size - subfile2.ptr);
 	if (xdl_do_diff(&subfile1, &subfile2, xpp, &env) < 0)
 		return -1;
 
