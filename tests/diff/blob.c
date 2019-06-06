@@ -39,7 +39,7 @@ void test_diff_blob__initialize(void)
 
 	g_repo = cl_git_sandbox_init("attr");
 
-	cl_git_pass(git_diff_init_options(&opts, GIT_DIFF_OPTIONS_VERSION));
+	cl_git_pass(git_diff_options_init(&opts, GIT_DIFF_OPTIONS_VERSION));
 	opts.context_lines = 1;
 
 	memset(&expected, 0, sizeof(expected));
@@ -520,19 +520,19 @@ void test_diff_blob__can_compare_a_binary_blob_and_a_text_blob(void)
  * +++ b/a0f7217
  * @@ -1,6 +1,6 @@
  *  Here is some stuff at the start
- * 
+ *
  * -This should go in one hunk
  * +This should go in one hunk (first)
- * 
+ *
  *  Some additional lines
- * 
+ *
  * @@ -8,7 +8,7 @@ Down here below the other lines
- * 
+ *
  *  With even more at the end
- * 
+ *
  * -Followed by a second hunk of stuff
  * +Followed by a second hunk of stuff (second)
- * 
+ *
  *  That happens down here
  */
 void test_diff_blob__comparing_two_text_blobs_honors_interhunkcontext(void)
